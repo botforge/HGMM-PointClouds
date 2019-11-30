@@ -41,25 +41,19 @@ class WaymoLIDARVisCallback(object):
     def __call__(self, newpoints):
         #Convert Points into pointcloud 
         self.np_to_pc(newpoints)
-        if(self._cnt == 0):
-            self._vis.add_geometry(self._currpc)
+        # if(self._cnt == 0):
+        self._vis.add_geometry(self._currpc)
         self._vis.update_geometry()
         self._vis.poll_events()
         self._vis.update_renderer()
         if self._save:
             self._vis.capture_screen_image("image_%04d.jpg" % self._cnt)
         self._cnt += 1
-
-def show_pc(frame, range_images, camera_projections, range_image_top_pose, callback):
-    #Convert Points into [n, xyz]    
-    points, cp_points = frame_utils.convert_range_image_to_point_cloud(
-                        frame,
-                        range_images,
-                        camera_projections,
-                        range_image_top_pose)
-    points_all = np.concatenate(points, axis=0)
-    callback(points_all)
-
+    
+def convert_np_to_pc(np_pts):
+    pc = o3.geometry.PointCloud() 
+    pc.points = o3.utility.Vector3dVector(np_pts)
+    return pc
 
 """
 Show Camera Image Along with Labels - Copied from Waymo Open Dataset Tutorial Colab
@@ -124,15 +118,24 @@ def extract_waymo_data(filename, max_frames=150):
 
 class WaymoLIDARPair(object):
     """Get a pair of LIDAR frames (prev, curr)"""
-    def __init__(self, skip=0, filename='../waymodata/segment-10206293520369375008_2796_800_2816_800_with_camera_labels.tfrecord'
+    def __init__(self, as_pc = False, voxel_size=1.0, skip=0, max_frames = 150, filename='../waymodata/segment-10206293520369375008_2796_800_2816_800_with_camera_labels.tfrecord'
 ):
         self._ptr = 1
-        self.framelist, self.range_imagelist, self.camera_imagelist, self.range_image_toplist = extract_waymo_data(filename)
-    
+        self.framelist, self.range_imagelist, self.camera_imagelist, self.range_image_toplist = extract_waymo_data(filename, max_frames=max_frames)
+        self.as_pc = as_pc
+
         #Put all Points into a list
         self.points_list = []
+        self.pc_list = []
         for i in range(len(self.framelist)):
-            self.points_list.append(self.get_pc(i))
+            pc_np = self.get_pc(i)
+            if as_pc:
+                pc = convert_np_to_pc(pc_np)
+                pc = o3.voxel_down_sample(pc, voxel_size=2.0)
+                self.pc_list.append(pc)
+                self.points_list.append(np.asarray(pc.points))
+            else:
+                self.points_list.append(pc_np)
 
     def get_pc(self, i):
         points, _ = frame_utils.convert_range_image_to_point_cloud(
@@ -140,12 +143,20 @@ class WaymoLIDARPair(object):
                                 self.range_imagelist[i],
                                 self.camera_imagelist[i],
                                 self.range_image_toplist[i])
-        return points
+        points_all = np.concatenate(points, axis=0)
+        return points_all
 
     def next_pair(self):
-        ret = (self.points_list[self._ptr - 1], self.points_list[self._ptr])
-        self._ptr+=1
-        return ret
+        if(self._ptr < len(self.points_list)):
+            ret_np = (self.points_list[self._ptr - 1], self.points_list[self._ptr])
+            if self.as_pc:
+                ret_pc = (self.pc_list[self._ptr - 1], self.pc_list[self._ptr])
+            else:
+                ret_pc = (None, None)
+            self._ptr+=1
+            return ret_np[0], ret_np[1], ret_pc[0], ret_pc[1], False
+        else:
+            return None, None, None, None, True
 
     # callback = WaymoLIDARVisCallback()
     # for i in range(len(framelist)):

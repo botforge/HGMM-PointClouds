@@ -1,33 +1,31 @@
+import copy
 from waymoutils import WaymoLIDARPair, convert_np_to_pc, WaymoLIDARVisCallback
 import open3d as o3
 import numpy as np
 import transformations as trans
-from probreg import gmmtree
+from probreg import gmmtree, cpd, l2dist_regs
 from probreg import callbacks
+from collections import deque
 import hgmm_utils
 
-waymopair = WaymoLIDARPair(max_frames=150, as_pc = True, voxel_size = 2.0, filename='/home/mlab-dhruv/Desktop/pointclouds/waymodata/segment-10206293520369375008_2796_800_2816_800_with_camera_labels.tfrecord')
+waymopair = WaymoLIDARPair(max_frames=50, as_pc = True, voxel_size = 2.0, filename='/home/mlab-dhruv/Desktop/pointclouds/waymodata/segment-10206293520369375008_2796_800_2816_800_with_camera_labels.tfrecord')
+TRANSLATE_02x = np.identity(4)
+TRANSLATE_02x[0, 3] = 0.5
 
 done = False
-trans_so_far = np.identity(4)
+all_trans = deque([])
 vis = WaymoLIDARVisCallback() 
 while True:
     prev_np, curr_np, prev_pc, curr_pc, done = waymopair.next_pair()
     if done:
         break
-    cbs = [callbacks.Open3dVisualizerCallback(curr_pc, prev_pc)]
-    tf_param, _ = gmmtree.registration_gmmtree(curr_pc, prev_pc, callbacks=cbs)
-    # cbs[0].__del__()
-    #Update Running Transformation Matrix
-    # homo = trans.identity_matrix()
-    # homo[:3, :3] = tf_param.rot
-    # homo[:3, 3] = tf_param.t
-    # trans_so_far = np.dot(trans_so_far, homo)
 
-    # #Update curr_pc
-    # homo_curr_np = np.ones((curr_np.shape[0], 4))
-    # homo_curr_np[:, :3] = curr_np
-    # homo_curr_np = np.dot(homo_curr_np, trans_so_far.T)
-    # curr_np = homo_curr_np[:, :3]
-    # print(homo_curr_np)
-    # vis(curr_np)
+    #1: Compute L2 Gaussian Registration & Transform chain
+    tf_param = l2dist_regs.registration_svr(curr_pc, prev_pc)
+    all_trans.append(tf_param)
+    result = copy.deepcopy(curr_pc)
+    # result.points = tf_param.transform(result.points)
+
+    for tf in all_trans.reverse():
+        result.points = tf.transform(result.points)
+    vis(result, addpc=True)

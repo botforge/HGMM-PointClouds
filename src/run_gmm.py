@@ -10,14 +10,14 @@ WAYMO=True
 from waymoutils import WaymoLIDARPair, convert_np_to_pc, WaymoLIDARVisCallback
 
 def map_points_to_gmm(pts, means, weights, covs):
-    # dists = np.linalg.norm(means, axis=1)
-    # neworder = np.argsort(dists)
-    # temp_means = means[neworder, :]
-    # means = temp_means
-    # temp_weights = weights[neworder]
-    # weights = temp_weights
-    # temp_covs = covs[neworder]
-    # covs = temp_covs
+    dists = np.linalg.norm(means, axis=1)
+    neworder = np.argsort(dists)
+    temp_means = means[neworder, :]
+    means = temp_means
+    temp_weights = weights[neworder]
+    weights = temp_weights
+    temp_covs = covs[neworder]
+    covs = temp_covs
 
     logprobs = np.zeros((pts.shape[0], means.shape[0]))
     for i in range(means.shape[0]):

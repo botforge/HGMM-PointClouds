@@ -41,11 +41,14 @@ class WaymoLIDARVisCallback(object):
         if colors is not None:
             self._currpc.colors = o3.utility.Vector3dVector(colors)
         
-    def __call__(self, newpoints, colors=None):
-        #Convert Points into pointcloud 
-        self.np_to_pc(newpoints, colors)
-        if(self._cnt == 0):
-            self._vis.add_geometry(self._currpc)
+    def __call__(self, newpoints, colors=None, addpc=False):
+        if addpc:
+            self._vis.add_geometry(newpoints)
+        else:
+            #Convert Points into pointcloud 
+            self.np_to_pc(newpoints, colors)
+            if(self._cnt == 0):
+                self._vis.add_geometry(self._currpc)
         self._vis.update_geometry()
         self._vis.poll_events()
         self._vis.update_renderer()

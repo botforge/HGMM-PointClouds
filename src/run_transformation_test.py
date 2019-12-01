@@ -31,7 +31,7 @@ ROT_15z = np.array([[np.cos(th), -np.sin(th), 0.0, 0.0],
 
 all_trans = []
 
-# #1: a)Load Source & Target Pointclouds b) Transform Target c) Downsample for speed
+#1: a)Load Source & Target Pointclouds b) Transform Target c) Downsample for speed
 source = o3.read_point_cloud(filepath)
 target = copy.deepcopy(source)
 target.transform(TRANSLATE_02x)

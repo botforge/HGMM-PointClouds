@@ -10,7 +10,7 @@ from waymo_open_dataset import dataset_pb2 as open_dataset
 
 
 class WaymoLIDARVisCallback(object):
-    """Display Stream of LIDAR Points
+    """Display Stream of LIDAR Points & GMM
 
     Args:
         save (bool, optional): If this flag is True,
@@ -24,7 +24,8 @@ class WaymoLIDARVisCallback(object):
         self._vis = o3.Visualizer()
         self._vis.create_window()
         opt = self._vis.get_render_option()
-        opt.background_color = np.asarray([0.2, 0.2, 0.2])
+        opt.background_color = np.asarray([0.0, 0.0167, 0.1186])
+        opt.point_size = 1.5
         self._save = save
         self._keep_window = keep_window
         self._cnt = 0
@@ -35,14 +36,16 @@ class WaymoLIDARVisCallback(object):
             self._vis.run()
         self._vis.destroy_window()
 
-    def np_to_pc(self, pts):
+    def np_to_pc(self, pts, colors=None):
         self._currpc.points = o3.utility.Vector3dVector(pts)
+        if colors is not None:
+            self._currpc.colors = o3.utility.Vector3dVector(colors)
         
-    def __call__(self, newpoints):
+    def __call__(self, newpoints, colors=None):
         #Convert Points into pointcloud 
-        self.np_to_pc(newpoints)
-        # if(self._cnt == 0):
-        self._vis.add_geometry(self._currpc)
+        self.np_to_pc(newpoints, colors)
+        if(self._cnt == 0):
+            self._vis.add_geometry(self._currpc)
         self._vis.update_geometry()
         self._vis.poll_events()
         self._vis.update_renderer()
@@ -131,7 +134,7 @@ class WaymoLIDARPair(object):
             pc_np = self.get_pc(i)
             if as_pc:
                 pc = convert_np_to_pc(pc_np)
-                pc = o3.voxel_down_sample(pc, voxel_size=2.0)
+                pc = o3.voxel_down_sample(pc, voxel_size=voxel_size)
                 self.pc_list.append(pc)
                 self.points_list.append(np.asarray(pc.points))
             else:

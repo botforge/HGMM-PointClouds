@@ -2,7 +2,6 @@ from __future__ import print_function
 import airsim
 import cv2, sys, os
 from f110_gym.sim_f110_core import SIM_f110Env
-from oracles.FGM import FGM
 import numpy as np
 import pickle
 
@@ -25,9 +24,11 @@ def main():
             break
         if done:
             print("ISDONE")
-            obs = env.reset()  
+            break
+            # obs = env.reset()  
 
     with open("lidarlist.pkl", "wb") as f:
         pickle.dump(lidarlist, f)
+
 if __name__ == '__main__':
     main()

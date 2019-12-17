@@ -1,14 +1,19 @@
-import tensorflow as tf
+try:
+    import tensorflow as tf
+    tf.enable_eager_execution()
+except:
+    print("NO TF")
 import numpy as np
-tf.enable_eager_execution()
 import pickle
 import open3d as o3
 
-from waymo_open_dataset.utils import range_image_utils
-from waymo_open_dataset.utils import transform_utils
-from waymo_open_dataset.utils import  frame_utils
-from waymo_open_dataset import dataset_pb2 as open_dataset
-
+try:
+    from waymo_open_dataset.utils import range_image_utils
+    from waymo_open_dataset.utils import transform_utils
+    from waymo_open_dataset.utils import  frame_utils
+    from waymo_open_dataset import dataset_pb2 as open_dataset
+except:
+    print("NO WAYMOOD")
 
 class WaymoLIDARVisCallback(object):
     """Display Stream of LIDAR Points & GMM
@@ -124,7 +129,7 @@ def extract_waymo_data(filename, max_frames=150):
 
 class f110LIDARPair(object):
     """Get a pair of LIDAR frames from the F110 Simulator (prev, curr)"""
-    def __init__(self, as_pc = False, voxel_size=1.0, skip=0, max_frames = 150, filename='../f110data/sess.pkl'
+    def __init__(self, as_pc = False, voxel_size=1.0, skip=0, max_frames = 150, filename='lidarlist.pkl'
 ):
         self._ptr = 1
         #Open LiDAR Range Frames

@@ -6,9 +6,10 @@ from scipy.stats import multivariate_normal
 
 filepath = '../data/bunny.pcd'
 WAYMO=False
+F110=True
 
-if WAYMO:
-    from waymoutils import WaymoLIDARPair, convert_np_to_pc, WaymoLIDARVisCallback
+if WAYMO or F110:
+    from waymoutils import f110LIDARPair, WaymoLIDARPair, convert_np_to_pc, WaymoLIDARVisCallback
 
 def map_points_to_gmm(pts, means, weights, covs):
     dists = np.linalg.norm(means, axis=1)
@@ -32,6 +33,10 @@ def map_points_to_gmm(pts, means, weights, covs):
 if WAYMO:
     waymopair = WaymoLIDARPair(max_frames=100, as_pc = True, voxel_size = 0.7, filename='/home/mlab-dhruv/Desktop/pointclouds/waymodata/segment-10206293520369375008_2796_800_2816_800_with_camera_labels.tfrecord')
     vis = WaymoLIDARVisCallback()
+elif F110:
+    waymopair = f110LIDARPair(max_frames=100, as_pc = True, voxel_size = 0.001)
+    vis = WaymoLIDARVisCallback() 
+
 
 n_gmm_components = 50
 all_colors = np.array([np.random.uniform(0, 1, 3) for _ in range(n_gmm_components)])
@@ -39,7 +44,7 @@ fit_gmm_every = 10
 num_iters = 0
 while True:
     # 1: a)Load Source & Target Pointclouds b) Transform Target c) Downsample for speed
-    if WAYMO:
+    if WAYMO or F110:
         source_np, _, source, _, done = waymopair.next_pair()
         if done:
             break
@@ -61,7 +66,7 @@ while True:
     #3: Visualize
     source_colors = all_colors[gmm_idxs, :]
 
-    if WAYMO:
+    if WAYMO or F110:
         vis(source_np, source_colors)
     else:
         vis = o3.Visualizer()

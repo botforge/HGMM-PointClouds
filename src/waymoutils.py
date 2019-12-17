@@ -25,7 +25,7 @@ class WaymoLIDARVisCallback(object):
             the drawing window blocks after registration is finished.
     """
     def __init__(self, save=False,
-                 keep_window=True):
+                 keep_window=True, asmesh=False):
         #Create Visualizer Window etc
         self._vis = o3.visualization.Visualizer()
         self._vis.create_window()
@@ -36,6 +36,8 @@ class WaymoLIDARVisCallback(object):
         self._keep_window = keep_window
         self._cnt = 0
         self._currpc = o3.geometry.PointCloud()
+        self.currmesh = None
+        self.asmesh = asmesh
 
     def __del__(self):
         if self._keep_window:
@@ -50,6 +52,24 @@ class WaymoLIDARVisCallback(object):
     def __call__(self, newpoints, colors=None, addpc=False):
         if addpc:
             self._vis.add_geometry(newpoints)
+        elif self.asmesh:
+            pcd = convert_np_to_pc(newpoints)
+            pcd.estimate_normals()
+
+            # estimate radius for rolling ball
+            distances = pcd.compute_nearest_neighbor_distance()
+            avg_dist = np.mean(distances)
+            radius = 1.5 * avg_dist   
+
+            if self.currmesh is not None:
+                self._vis.remove_geometry(self.currmesh)
+
+            mesh = o3.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, o3.utility.DoubleVector([radius, radius * 2]))
+
+            self._vis.add_geometry(mesh)
+            self._vis.poll_events()
+            self._vis.update_renderer()
+            self.currmesh = mesh
         else:
             #Convert Points into pointcloud 
             self.np_to_pc(newpoints, colors)

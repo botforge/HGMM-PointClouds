@@ -27,7 +27,7 @@ class WaymoLIDARVisCallback(object):
     def __init__(self, save=False,
                  keep_window=True):
         #Create Visualizer Window etc
-        self._vis = o3.Visualizer()
+        self._vis = o3.visualization.Visualizer()
         self._vis.create_window()
         opt = self._vis.get_render_option()
         opt.background_color = np.asarray([0.0, 0.0167, 0.1186])
@@ -144,7 +144,7 @@ class f110LIDARPair(object):
             pc_np = self.get_pc(i)
             if as_pc:
                 pc = convert_np_to_pc(pc_np)
-                pc = o3.voxel_down_sample(pc, voxel_size=voxel_size)
+                pc = pc.voxel_down_sample(voxel_size=voxel_size)
                 self.pc_list.append(pc)
                 self.points_list.append(np.asarray(pc.points))
             else:

@@ -201,7 +201,7 @@ class WaymoLIDARPair(object):
             pc_np = self.get_pc(i)
             if as_pc:
                 pc = convert_np_to_pc(pc_np)
-                pc = o3.voxel_down_sample(pc, voxel_size=voxel_size)
+                pc = pc.voxel_down_sample(voxel_size=voxel_size)
                 self.pc_list.append(pc)
                 self.points_list.append(np.asarray(pc.points))
             else:

@@ -13,7 +13,7 @@ if WAYMO:
     waymopair = WaymoLIDARPair(max_frames=100, as_pc = True, voxel_size = 0.7, filename='/home/mlab-dhruv/Desktop/pointclouds/waymodata/segment-10206293520369375008_2796_800_2816_800_with_camera_labels.tfrecord')
     vis = WaymoLIDARVisCallback()
 elif F110:
-    waymopair = f110LIDARPair(max_frames=8, as_pc = True, voxel_size = 0.001)
+    waymopair = f110LIDARPair(max_frames=2, as_pc = True, voxel_size = 0.001)
     vis = WaymoLIDARVisCallback(asmesh=True)
 
 while True:

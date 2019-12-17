@@ -5,9 +5,10 @@ import open3d as o3
 from scipy.stats import multivariate_normal
 
 filepath = '../data/bunny.pcd'
-WAYMO=True
+WAYMO=False
 
-from waymoutils import WaymoLIDARPair, convert_np_to_pc, WaymoLIDARVisCallback
+if WAYMO:
+    from waymoutils import WaymoLIDARPair, convert_np_to_pc, WaymoLIDARVisCallback
 
 def map_points_to_gmm(pts, means, weights, covs):
     dists = np.linalg.norm(means, axis=1)

@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 tf.enable_eager_execution()
+import pickle
 import open3d as o3
 
 from waymo_open_dataset.utils import range_image_utils
@@ -120,6 +121,44 @@ def extract_waymo_data(filename, max_frames=150):
         camera_imagelist.append(camera_images)
         range_image_toplist.append(range_image_top)
     return framelist, range_imagelist, camera_imagelist, range_image_toplist
+
+class f110LIDARPair(object):
+    """Get a pair of LIDAR frames from the F110 Simulator (prev, curr)"""
+    def __init__(self, as_pc = False, voxel_size=1.0, skip=0, max_frames = 150, filename='../f110data/sess.pkl'
+):
+        self._ptr = 1
+        #Open LiDAR Range Frames
+        with open(filename, 'rb') as f:
+            self.framelist = pickle.load(f)
+        self.as_pc = as_pc
+
+        #Put all Points into a list as pointclouds
+        self.points_list = []
+        self.pc_list = []
+        for i in range(len(self.framelist)):
+            pc_np = self.get_pc(i)
+            if as_pc:
+                pc = convert_np_to_pc(pc_np)
+                pc = o3.voxel_down_sample(pc, voxel_size=voxel_size)
+                self.pc_list.append(pc)
+                self.points_list.append(np.asarray(pc.points))
+            else:
+                self.points_list.append(pc_np)
+
+    def get_pc(self, i):
+        return self.framelist[i]
+
+    def next_pair(self):
+        if(self._ptr < len(self.points_list)):
+            ret_np = (self.points_list[self._ptr - 1], self.points_list[self._ptr])
+            if self.as_pc:
+                ret_pc = (self.pc_list[self._ptr - 1], self.pc_list[self._ptr])
+            else:
+                ret_pc = (None, None)
+            self._ptr+=1
+            return ret_np[0], ret_np[1], ret_pc[0], ret_pc[1], False
+        else:
+            return None, None, None, None, True
 
 
 class WaymoLIDARPair(object):
